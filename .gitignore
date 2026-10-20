@@ -259,7 +259,11 @@ docs/*
 !docs/mission-reference.md
 !docs/wilderness-missions.md
 !docs/gm-commands.md
+!docs/pravus-population.txt
 
 # Local runtime files
 /log-auth.txt
 /log-game.txt
+
+# Local game client archive and extracted installation
+/Game Client/

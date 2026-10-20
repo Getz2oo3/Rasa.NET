@@ -1,0 +1,103 @@
+Pravus population restoration: historical placement pass 1
+Map context 1430 / client 1.16.5.0
+
+Scope
+NPC and mob population. Quests, mission progression, escort events and fabricated
+population density are outside this pass. Existing Pravus rows remain intact.
+Historical evidence of a population is not proof of an exact spawn coordinate.
+
+First patch: 20261217000000_Pravus_historical_npcs_v1 (SQLite and MySQL)
+
+NPC                 Creature/pool   Native name ID   Source XYZ          Authored XYZ
+Ranger Nylla        640001          4843             -185,5,-123         -185,5.137001,-123
+Cmd. Sgt. Price     640002          205              -268,6,-127         -268,7.159849,-127
+Field Lt. Perkins   640003          204              -77,31,176          -77,32.020172,176
+
+The historical records give species and integer XYZ coordinates:
+https://www.ellatha.com/tr/npcview.asp?id=69&key=Ranger+Nylla
+https://www.ellatha.com/tr/npcview.asp?id=70&key=Cmd.+Sgt.+Price
+https://www.ellatha.com/tr/npcview.asp?id=71&key=Field+Lt.+Perkins
+
+The shipped data/game.zip member
+generated/client/language/english/creaturenamelanguage.pyo confirms those
+name IDs. It was parsed as Python 2.4 bytecode data without executing it.
+The historical pages do not establish a precise retail patch date. These are
+documented historical placements, not proof of unchanged 1.16.5.0 locations.
+
+X/Z are retained exactly. Y is adjusted to the checked-in Pravus navmesh at
+those X/Z coordinates, preventing fixed-position NPCs from standing below
+the current floor. Nylla's point lies at a native small Forean hut
+(entity class 6168), corroborating the guide's first-hut description.
+On 2026-10-20 the user confirmed all three locations in the running client
+and supplied screenshots with the corresponding target names. Nylla is
+visible inside the Forean hut; Price and Perkins are selected at their
+respective locations. The latter two screenshots overlap the player and NPC,
+so they do not establish detailed model or foot-placement correctness.
+
+Presentation and runtime defaults
+Species is historical: Nylla is Forean, Price and Perkins are Human.
+Appearance uses existing stock Forean ranger (class 7034) and male AFS officer
+(class 3846) templates. Exact original outfits, colors, facing and statistics
+have NOT been recovered. Level 10 / 1000 HP and a 2-second respawn use existing
+mission-NPC conventions; spawnpool.respown_time is in tenths of a second.
+These stationary, friendly actors have no attacks, no greeting and no NPC
+mission package. They do not offer quests or trigger story events.
+
+Do not present these template appearances or runtime defaults as recovered
+retail data. This first patch validates historical placement and client names.
+
+Existing baseline
+13 pools: 3 service NPCs (500201..500203), 6 AFS turrets (550085..550090),
+4 Bane squad pools (560013..560016). No baseline row is moved or replaced.
+User observed all three service creatures with .near and visually confirmed
+one of them. At Frontlines / North Fortification near (-63.082,23.5156,5.8008),
+.near returned no creatures or dynamic objects.
+
+Deferred evidence
+The historical guide (Tony "RadarX" Jones, October 4, 2007) documents soldiers
+at the Frontline's Entrance, Machina attacks, guards at the facility entrance,
+and three Linkers in an interior passage around X/Z 139.7,98.4:
+https://www.tentonhammer.com/node/12824
+It also places Nylla and Price approximately where Ellatha records them.
+Group centers and approximate counts are insufficient to invent individual
+placement coordinates, patrol routes or wave timers. Validate the room/floor
+and obtain additional evidence before placing these enemies.
+
+Johnson's Ellatha record gives an older location (-83,33,-132):
+https://www.ellatha.com/tr/npcview.asp?id=72&key=Information+Spec.+Johnson
+A later patch note moves him to the pillbox beside Perkins:
+https://www.engadget.com/2008-04-08-new-tr-patch-bringing-the-goods-on-test-server.html
+Do not seed that older coordinate. His name is native ID 206; a final-position
+reference is still needed.
+
+Validation and deployment
+Run the PravusPopulationTests regression filter. It uses a disposable SQLite
+World database to check upgrade, repeated update, rollback, floor heights,
+existing population preservation and unchanged mission-definition counts.
+The MySQL check generates forward and rollback SQL without a database connection.
+Live MySQL execution is separate from local SQLite testing.
+Validated locally on 2026-10-20: the SQLite upgrade/rollback test passed;
+the offline MySQL check plus StandingSpawnHeightTests and
+SpawnPoolLifecycleTests passed (46 tests). Isolated build outputs were used,
+with no changes to the running server or its databases during those tests.
+Subsequent user testing on 2026-10-20 confirmed Nylla, Price and Perkins at
+their locations in the running client. Displayed names are also confirmed
+by the supplied screenshots. Exact historical appearance, detailed ground
+contact, absence of quest interactions and squad-instance isolation were
+not independently established by those screenshots.
+
+For the local Windows installation: stop Game and Auth using their console
+exit commands, use Local Server/Build Server.cmd, then start Auth and Game.
+SQLite applies the new World migration on startup; no database reset is needed.
+Never delete character databases to install population updates.
+
+Enter Pravus with /gotomap 1430 and inspect each location. Use .where and .near
+to report position and entities. Confirm visible feet, model, name, no quest
+offers, and isolation from another squad's instance. The first patch is not
+an assertion that the whole operation is restored.
+
+Inspection commands (these land directly at each NPC's point):
+Nylla:   .tele -185 5.137001 -123
+Price:   .tele -268 7.159849 -127
+Perkins: .tele -77 32.020172 176
+Step away after teleporting to inspect the actor.
