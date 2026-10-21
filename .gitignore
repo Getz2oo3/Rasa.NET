@@ -260,6 +260,7 @@ docs/*
 !docs/wilderness-missions.md
 !docs/gm-commands.md
 !docs/pravus-population.txt
+!docs/pravus-mission-reconstruction.txt
 
 # Local runtime files
 /log-auth.txt

@@ -304,6 +304,9 @@ namespace Rasa.Managers
             /// <summary>When it comes back, while it is down; 0 while it stands.</summary>
             public long RespawnAt { get; internal set; }
 
+            /// <summary>Encounter-owned objects stay destroyed until their encounter resets.</summary>
+            public bool Respawns { get; set; } = true;
+
             /// <summary>A spawner's creature and how many come out at a time: 0 for none.</summary>
             public uint CreatureId { get; internal set; }
             public uint CreatureCount { get; internal set; }
@@ -860,6 +863,8 @@ namespace Rasa.Managers
 
                 if (live.IsDown)
                 {
+                    if (!live.Respawns)
+                        continue;
                     // A force field ForceFields took down: when it is due back.
                     if (live.RespawnAt == 0)
                         live.RespawnAt = now + Math.Clamp(Roll(RespawnMinMs, RespawnMaxMs), RespawnMinMs, RespawnMaxMs);

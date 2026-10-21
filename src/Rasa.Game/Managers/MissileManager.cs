@@ -650,6 +650,12 @@ namespace Rasa.Managers
             {
                 var missile = mapChannel.QueuedMissiles[i];
 
+                if (missile.Cancelled)
+                {
+                    mapChannel.QueuedMissiles.RemoveAt(i);
+                    continue;
+                }
+
                 missile.TriggerTime -= delta;
 
                 if (missile.TriggerTime > 0)
@@ -1199,6 +1205,9 @@ namespace Rasa.Managers
 
         public void MissileTrigger(MapChannel mapChannel, Missile missile)
         {
+            if (missile.Cancelled)
+                return;
+
             var targetType = EntityManager.Instance.GetEntityType(missile.TargetEntityId);
 
             // A destructible prop of the .map (WorldDestructibles) is an object, as it was at the launch.

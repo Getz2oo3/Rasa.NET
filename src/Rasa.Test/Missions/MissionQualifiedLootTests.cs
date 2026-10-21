@@ -751,7 +751,7 @@ namespace Rasa.Test.Missions
             }
         }
 
-        private sealed class PartyScope : IDisposable
+        internal sealed class PartyScope : IDisposable
         {
             private readonly Client[] _clients;
             internal Party Party { get; }

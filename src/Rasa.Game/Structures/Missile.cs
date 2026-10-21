@@ -4,6 +4,8 @@
 
     public class Missile
     {
+        /// <summary>The caster died before this queued attack resolved. Kept until the queue worker removes it.</summary>
+        internal bool Cancelled { get; set; }
         public int DamageA { get; set; }
         public int DamageB { get; set; }
         public ActionId ActionId { get; set; }

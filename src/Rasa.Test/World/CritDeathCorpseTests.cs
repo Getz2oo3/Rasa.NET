@@ -130,9 +130,42 @@ namespace Rasa.Test.World
                 .Where(message => message.EntityId == creature.EntityId).Select(message => message.Packet).ToList();
             var health = sent.FindIndex(packet => packet is UpdateHealthPacket);
             var state = sent.FindIndex(packet => packet is StateChangePacket);
+            var killed = sent.FindIndex(packet => packet is ActorKilledPacket);
             Assert.IsTrue(health >= 0, "UpdateHealth is sent.");
             Assert.AreEqual(0, ((UpdateHealthPacket)sent[health]).Health.Current);
+            Assert.IsTrue(killed >= 0 && killed < state,
+                "ActorKilled must cancel the client's attack before StateChange makes IsDead true.");
             Assert.IsTrue(state > health, "And then the state change.");
+        }
+
+        [TestMethod]
+        public void DeathCancelsQueuedAttacksWithoutRemovingMissilesDuringQueueIteration()
+        {
+            using var world = new WorldTestContext();
+            var body = Spawn(world, "Attacking", 0);
+            var watcher = Watch(world, x: 4);
+            watcher.Player.Attributes[Attributes.Health] = new ActorAttributes(Attributes.Health, 100, 100, 100, 0, 0);
+            var attack = new Missile { Source = body, TargetActor = watcher.Player,
+                TargetEntityId = watcher.Player.EntityId, DamageA = 15, TriggerTime = 5000 };
+            var otherAttack = new Missile { Source = watcher.Player, TriggerTime = 5000 };
+            var flying = new Missile { Source = body, HeldForFlight = true, TriggerTime = 5000 };
+            world.Map.QueuedMissiles.AddRange(new[] { attack, otherAttack, flying });
+
+            CreatureManager.Instance.HandleCreatureKill(world.Map, body, null);
+            AssertCorpseAtZero(body, watcher);
+            Assert.AreEqual(3, world.Map.QueuedMissiles.Count, "Death can run inside the missile worker; do not invalidate its index.");
+            Assert.IsTrue(attack.Cancelled);
+            Assert.IsFalse(otherAttack.Cancelled);
+            Assert.IsFalse(flying.Cancelled, "An explicitly launched projectile keeps travelling.");
+
+            // Even a subsequent revival must not revive the old attack.
+            CreatureSupport.Revive(world.Map, body, 50, null, recount: false);
+            WorldTestContext.Drain(watcher);
+            MissileManager.Instance.MissileTrigger(world.Map, attack);
+            MissileManager.Instance.DoWork(world.Map, 250);
+            Assert.AreEqual(100, watcher.Player.Attributes[Attributes.Health].Current);
+            Assert.IsFalse(world.Map.QueuedMissiles.Contains(attack));
+            Assert.AreEqual(0, WorldTestContext.Drain(watcher).Count, "No attack recovery may restart the corpse's weapon.");
         }
 
         /// <summary>Stunned at five percent by a player: the window opens.</summary>

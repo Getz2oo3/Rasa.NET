@@ -371,7 +371,7 @@ namespace Rasa.Managers
         }
 
         /// <param name="arrival">An arrival point the dropship lands on (a pad, a bay); null: the pool's own ground.</param>
-        private void EnqueueDropship(MapChannel mapChannel, SpawnPool spawnPool, List<Creature> creatureList, SpawnPoolArrivalEntry arrival = null)
+        internal void EnqueueDropship(MapChannel mapChannel, SpawnPool spawnPool, List<Creature> creatureList, SpawnPoolArrivalEntry arrival = null)
         {
             Dropship dropship = null;
             var reserved = false;

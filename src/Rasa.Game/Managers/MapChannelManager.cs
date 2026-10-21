@@ -598,6 +598,9 @@ namespace Rasa.Managers
 
                     _missionScenarioService?.TickMap(mapChannel);
 
+                    if (Timer.IsTriggered("Regenerate"))
+                        Guard("PravusOperation.Worker", mapChannel, () => PravusOperation.Worker(mapChannel));
+
                     // what the players hurt this tick say of it (PlayerVoices)
                     Guard("PlayerVoices.Worker", mapChannel, () => PlayerVoices.Worker(mapChannel));
 

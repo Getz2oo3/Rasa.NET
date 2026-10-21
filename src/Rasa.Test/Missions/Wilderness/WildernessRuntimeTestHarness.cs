@@ -210,6 +210,32 @@ namespace Rasa.Test.Missions.Wilderness
             CellManager.Instance.UpdateVisibility(Client);
         }
 
+        internal void EnterMap(uint mapId, string mapName)
+        {
+            CellManager.Instance.RemoveFromWorld(Client);
+            Map.ClientList.Remove(Client);
+            if (!Maps.MapChannelArray.TryGetValue(mapId, out var destination))
+            {
+                destination = new MapChannel
+                {
+                    MapInfo = new MapInfo(mapId, mapName, 1, mapId), ClientList = new(),
+                    NavMesh = TestNavMeshes.Query(NavMeshFile.PathFor(Path.Combine(RepositoryRoot(), "navmesh"), mapName))
+                };
+                Maps.MapChannelArray.Add(mapId, destination);
+                SpawnPoolManager.Instance.InitializeMapChannel(destination);
+                using var world = CreateWorld();
+                foreach (var entry in world.Logoses.GetLogos().Where(entry => entry.MapContextId == mapId))
+                    destination.DynamicObjects.Add(new Logos(entry));
+                Objects.DynamicObjectWorker(destination, 0);
+            }
+            Map = destination;
+            Client.Player.MapChannel = destination;
+            Client.Player.RuntimeMapChannel = destination;
+            Client.Player.MapContextId = mapId;
+            destination.ClientList.Add(Client);
+            CellManager.Instance.AddToWorld(Client);
+        }
+
         internal IReadOnlyList<PythonPacket> Drain() => MissionTestContext.Drain(Client);
 
         internal AbilityManager LoadAbilities()
@@ -353,8 +379,8 @@ namespace Rasa.Test.Missions.Wilderness
             _disposed = true;
             foreach (var creature in EntityManager.Instance.Creatures.Values
                          .Where(creature => !_originalCreatures.Contains(creature.EntityId) &&
-                             Map != null && ReferenceEquals(creature.RuntimeMapChannel, Map)).ToArray())
-                CellManager.Instance.RemoveCreatureFromWorld(Map, creature);
+                             Maps != null && Maps.MapChannelArray.Values.Contains(creature.RuntimeMapChannel)).ToArray())
+                CellManager.Instance.RemoveCreatureFromWorld(creature.RuntimeMapChannel, creature);
             foreach (var restore in _restoreServices.AsEnumerable().Reverse())
                 restore();
             World?.Dispose();

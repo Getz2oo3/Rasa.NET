@@ -349,10 +349,10 @@ namespace Rasa.Test.Missions.Wilderness
             Reward(harness, parsons, 574, 0, 20548, 8000, 1200);
             Assert.AreEqual(0L, Held(harness, 753));
             Assert.AreEqual(1220U, harness.Client.Player.MapContextId);
-            Assert.IsFalse(harness.Manager.TryGetOperationalMission(593, out _));
+            Assert.IsTrue(harness.Manager.TryGetOperationalMission(593, out _));
         }
 
-        private static void CollectMachinaRemains(WildernessRuntimeTestHarness harness)
+        internal static void CollectMachinaRemains(WildernessRuntimeTestHarness harness)
         {
             var drop = harness.Manager.LoadedMissions[574].Items["machina-remains"].Drop;
             var creatureId = drop.CreatureIds.Single();

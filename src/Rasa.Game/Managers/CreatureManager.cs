@@ -170,6 +170,26 @@ namespace Rasa.Managers
             }
         }
 
+        /// <summary>
+        /// Actor.Recv_StateChange only transitions the client to dead. Recv_ActorKilled calls
+        /// AnnounceDeath, which also cancels the current action, tracking and persistent FX.
+        /// Send it first: Recv_ActorKilled ignores an actor already marked dead by StateChange.
+        /// </summary>
+        internal static void NotifyDeath(MapChannel mapChannel, Creature creature)
+        {
+            // Mark rather than remove: a killing missile may be iterating this same queue.
+            // A projectile explicitly launched into flight keeps travelling; an unresolved
+            // attack must not send a recovery that starts a corpse's weapon action again.
+            foreach (var missile in mapChannel.QueuedMissiles)
+                if (missile.Source == creature && !missile.HeldForFlight)
+                    missile.Cancelled = true;
+
+            BehaviorManager.Instance.StopMoving(creature);
+            CellManager.Instance.CellCallMethod(mapChannel, creature, new ActorKilledPacket());
+            CellManager.Instance.CellCallMethod(mapChannel, creature,
+                new StateChangePacket(new List<CharacterState> { CharacterState.Dead }));
+        }
+
         /// <param name="critKill">A Critical Death finish: the experience and adrenaline are paid twice over, the client is told how the second award was earned, and the body cannot be revived.</param>
         internal void HandleCreatureKill(MapChannel mapChannel, Creature creature, Actor killedBy, CritKill critKill = CritKill.None)
         {
@@ -226,8 +246,6 @@ namespace Rasa.Managers
                 Game.Missions.World.CreatureGameplayRules.RewardsKills(creature);
 
             // kill creature
-            var stateIds = new List<CharacterState> { CharacterState.Dead };
-
             creature.State = CharacterState.Dead;
             BehaviorManager.Instance.EndCarry(mapChannel, creature);
 
@@ -239,7 +257,7 @@ namespace Rasa.Managers
             ZeroVitals(mapChannel, creature);
 
             Game.Missions.World.CreatureGameplayRules.ClearRole(creature);
-            CellManager.Instance.CellCallMethod(mapChannel, creature, new StateChangePacket(stateIds));
+            NotifyDeath(mapChannel, creature);
             if (creature.SpawnPool?.FollowOwnerCharacterId > 0)
                 PublishEscortStatus(mapChannel, creature, false);
 

@@ -175,7 +175,9 @@ namespace Rasa.Navigation
             if (centreRef == 0)
                 return null;
 
-            var status = _query.FindRandomPointAroundCircle(centreRef, centrePoint, radius, _filter, _random, out _, out var point);
+            // AroundCircle selects intersecting polygons but may sample outside the circle
+            // on a large polygon. Keep spawn footprints inside their authored radius.
+            var status = _query.FindRandomPointWithinCircle(centreRef, centrePoint, radius, _filter, _random, out _, out var point);
 
             return status.Succeeded() ? ToVector(point) : (Vector3?)null;
         }

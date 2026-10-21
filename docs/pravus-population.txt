@@ -6,6 +6,166 @@ NPC and mob population. Quests, mission progression, escort events and fabricate
 population density are outside this pass. Existing Pravus rows remain intact.
 Historical evidence of a population is not proof of an exact spawn coordinate.
 
+Third patch: 20261219000000_Pravus_frontlines_population_v3
+Authored 2026-10-20 after the user's walk-through. Existing V1/V2 migrations
+remain unchanged. The user saw approximately 5-6 entrance guards, then reported
+the room beyond the spiral staircase and the Frontlines approach were empty.
+
+The first supplied position, (204.8359,9.6133,-7.7148), marks the stair approach,
+NOT the requested spawn location. The user subsequently supplied the room center
+(223.9844,9.6094,-7.7422). Pool 640201 uses that X/Z with navmesh Y=9.703304,
+radius 6 m, 2-3 existing level-10 soldiers plus one existing level-10 grenadier.
+The footprint starts over 13 m away from the original stair-approach point.
+The room's occupancy/count is based on the user's recollection; composition,
+spacing and timing are restoration estimates, not independent historical records.
+
+Frontlines pools (4-6 level-10 Hominis Machina each):
+640202: (-110,27.184092,10), radius 7 m, just beyond Frontlines entrance.
+640203: (-75,25.768618,-20), radius 9 m, southern side of the approach.
+640204: (-35,21.57058,20), radius 9 m, farther east toward the facility approach.
+These are estimated areas on reachable terrain, not recovered marker coordinates.
+The first area's edge is over 28 m from the nearest AFS turret, beyond the
+server's 18 m turret scan. All three new areas clear the existing AFS turrets.
+Historical support for Machina at Frontlines comes from the 2007 walkthrough
+and Ellatha's mission and marked overview:
+https://www.ellatha.com/tr/missionsview.asp?id=88&key=Assemble+With+Lieutenant+Perkins
+The mission's 15 kills is an objective, not an inferred simultaneous spawn count.
+Three areas of 4-6 are our density estimate, informed by existing Wilderness
+groups of 3-6 and the user's report of an empty walk from camp to the facility.
+
+New hostile creature 640201 uses regular Machina class 3868, stock movement,
+weapon action 72002 (native 1/97, 10-15 damage) and self-revive action 62059 (429/1).
+Legacy creature 8 is friendly and has mismatched HP fields (555 vs 120); it
+remains untouched. The Pravus copy is hostile, level 10, with both HP fields
+set to 555 and armor 70. These are tuning choices, not claimed retail statistics.
+The existing server's Machina self-revive mechanic is retained, without new
+mission/wave scripts. Existing Thrax/Linker definitions are unchanged.
+
+This patch adds 15-22 enemies: 3-4 in the room and 12-18 across Frontlines.
+Combined configured hostile population after V1-V3: 32-49 in eleven pools,
+when all pools are full. This is an initial populated approach, not a completed
+restoration of every battlefield or facility room. Timers follow V2: 120 seconds
+in non-squad channels; normal squad instances retain the 45-minute cleared-pool
+override. Player occupancy limits and instance policy are unchanged.
+
+Spawn-radius correction:
+Terrain probing exposed that Detour FindRandomPointAroundCircle can choose a
+point anywhere on an intersecting polygon, outside the requested radius. A
+6 m room footprint produced a point nearly 18 m away. NavMeshQuery now calls
+FindRandomPointWithinCircle so the spawn footprint really bounds the scatter.
+This shared navigation correction also affects other users of RandomPointAround;
+it does not rewrite their pool centers/radii or introduce new patrol routes.
+PravusFrontlinesPopulationTests samples all four new footprints, checks reachable
+ground and the room's lower floor/stair clearance, and exercises SQLite upgrade,
+repeat upgrade, preservation/rollback and offline MySQL SQL generation.
+
+Testing teleports (map 1430):
+Room approach: .tele 205 11 -8   (view the group ahead rather than land on it)
+Frontlines:    .tele -126 30 14  (walk east into the first encounter)
+South group:  .tele -75 28 -20
+East group:   .tele -35 25 20
+The new spawn areas still need in-game visual/combat acceptance after installation.
+Installed locally on 2026-10-20 after the user shut down client and servers.
+Game build succeeded; 110 tests passed: 83 Pravus/spawn/squad-state tests and
+27 hatchling/birth/patrol/aggression checks for the shared scatter correction.
+SQLite World was backed up before migration. Verification found exactly one
+creature, one stat row, four pools and the migration-history row added; all
+pre-existing content rows were preserved (automatic ID counters advanced).
+SQLite integrity_check returned ok. Rebuilt Game binaries include the bounded
+scatter correction. MySQL validation was SQL generation only.
+
+Second patch: 20261218000000_Pravus_enemy_population_v2
+Authored 2026-10-20. The migration number follows the repository's existing
+sequence; it is not the date on which the historical evidence was recorded.
+
+The user now authorizes estimated counts, spacing and respawn rates within
+historically supported encounter areas, using populated early zones as a
+baseline. These are explicitly restoration estimates, not recovered retail
+spawn records. This supersedes the earlier deferral of all estimated positions.
+
+Pool     Encounter                Center XYZ                        Radius Population
+640101   Lower Linker passage     139.6989,17.326593,98.389595        5 m    3 Linkers
+640102   Entrance outer guard     155,42.312,-8                       4 m    3-4 soldiers
+640103   Entrance inner guard     170,41.937004,-8                    4 m    2-3 soldiers + 1 grenadier
+
+All three pools are automatic ground spawns on map 1430, without patrols,
+mission bindings, key drops, camera triggers or arrival sequences. The two
+guard positions together contain 6-8 enemies. The first restoration adds
+9-11 enemies; together with the four existing 2-4-member Bane pools, the map
+has a configured hostile population of 17-27 when all seven pools are full.
+This does not imply all enemies are engaged or visible simultaneously.
+
+Historical basis:
+- Tony "RadarX" Jones's 2007-10-04 walkthrough names three Linkers near
+  X/Z 139.7,98.4, and a small Thrax group at the facility end of the bridge:
+  https://www.tentonhammer.com/node/12824
+- The Giddy Gamer zone list (revision 2007-11-18) lists Pravus at level 10+:
+  https://www.giddygamer.com/tabula/content/basics/zones.pdf
+  Its notes say the data derives from late beta. It is broad level guidance,
+  not proof of exact enemy levels or unchanged final-patch balance.
+- Live survey on 2026-10-20 confirmed the Linker passage's lower floor near
+  (140,17.1992,98) and entrance vestibule near (165,41.918,-8).
+  Pool centers are navmesh-adjusted estimates around those landmarks.
+  The Linker placement does not assign one creature to each extraction room.
+
+Emulator baselines and tuning:
+- Existing Pravus pools 560013..560016 use level-10 soldier 560001 and
+  grenadier 560002, 2-4 creatures total per pool and a database timer of 900.
+  New guards reuse these definitions unchanged. The grenade support slot
+  is an estimate from that composition, not a documented retail guard role.
+- Wilderness (1220) pools 580003..580005 hold 5-7 enemies on 120-second
+  timers; larger camps 580001..580002 hold 7-11 on 180-second timers.
+  Many smaller Wilderness pools hold 3-6 on 90-second timers. Thus 6-8
+  guards spread over two positions is comparable to an existing early camp.
+- Pravus is a squad instance by default; PartyManager.MaxPartySize is six.
+  The user's 3-15-player occupancy estimate is a density consideration,
+  not evidence of shared public occupancy or an instruction to change caps.
+- Linker creature 640101 uses regular class 9751/name 419, stock movement,
+  and creature 86's existing stats (750 HP, 175 armor, attributes 15).
+  Its level is estimated at 10 to match Pravus's surviving enemies.
+  max_hp and creature_stat.health both equal 750.
+- Dedicated actions 640101..640104 use native chest/hand/ground/channel
+  abilities 263/412/264/410. Timings follow the existing world Linkers;
+  damage is scaled to the low-level 15-25 baseline, with chest blast 30-45.
+  Channel deals no direct damage and uses the existing ally-boost behavior.
+  The level-40/42 Linkers' damage is not copied. Historical damage reflection
+  has not been established by this patch; no new combat mechanics are added.
+
+Respawn behavior (important):
+spawnpool.respown_time is in tenths of a second. New guards use 1200 (120 s),
+Linkers 1800 (180 s). Those are fallback timers when squad instancing is off.
+Normal squad instances override per-pool timers: the current default is
+45 minutes after the entire pool is cleared, via SquadInstances.RespawnMinutes.
+This patch preserves that policy and does not make normal Pravus instances
+respawn every two/three minutes. Respawn is per cleared pool, not per death.
+
+Review and deployment:
+Paired SQLite/MySQL migrations insert only the allocated creature/stat/action
+and pool rows. Rollback removes those rows, preserving all prior populations.
+PravusEnemyPopulationTests checks SQLite upgrade/repeated upgrade/rollback,
+preservation of existing data, reachable placement floors, combat references,
+population bounds, and offline MySQL forward/rollback SQL generation.
+Live visual/combat testing of the new mobs remains a separate acceptance step.
+Build and restart the local server to apply the migration; see deployment below.
+Validated locally on 2026-10-20: Game build succeeded; 53 focused tests passed
+(both Pravus migration suites, SpawnPoolLifecycleTests and SquadInstanceStateTests).
+The second migration was applied to the local SQLite World database after a
+backup. A full table comparison against that backup confirmed exactly one
+creature, one stat row, four actions, three pools and the migration-history row
+were added, with all pre-existing content rows preserved. SQLite's automatic
+ID counters advanced for the four affected content tables. integrity_check: ok.
+The rebuilt local Game binaries are ready for the next server start. MySQL
+was checked by generated SQL only. No new-mob visual/combat acceptance is claimed.
+
+Teleport checks on map 1430 (observer positions, slightly above the floor):
+Linkers:      .tele 140 18 98
+Outer guards: .tele 155 44 -8
+Inner guards: .tele 170 43 -8
+Check the Linker model/name and all three creatures on the lower passage;
+check 6-8 guards across both positions, feet clear of doorway walls, attacks,
+and that another squad has its own population. Use an appropriately leveled
+test character for balance; the level-1 GM survey character is not a benchmark.
+
 First patch: 20261217000000_Pravus_historical_npcs_v1 (SQLite and MySQL)
 
 NPC                 Creature/pool   Native name ID   Source XYZ          Authored XYZ
@@ -53,15 +213,104 @@ User observed all three service creatures with .near and visually confirmed
 one of them. At Frontlines / North Fortification near (-63.082,23.5156,5.8008),
 .near returned no creatures or dynamic objects.
 
+Village movement research (2026-10-20)
+The starting Forean village is the AFS Preparation Camp shown in the client's
+minimap. Distinguish it from the Bane facility interior later in the instance.
+The October 2007 walkthrough below describes troops near Price charging
+uphill alongside the player. It does not establish that Price himself moves,
+nor the troop count, exact route, repeat conditions or underlying trigger.
+The same guide reports Nylla appearing after the production machine is
+destroyed. This establishes a later appearance, not a continuous walking path.
+A December 10, 2007 firsthand account independently reports finding Nylla
+inside after destroying the machine:
+https://banstickpodcast.wordpress.com/2007/12/10/tr-finished-pravus/
+
+No routine patrol route for Nylla, Price, Perkins or the village vendors has
+been established by the sources reviewed. That uncertainty must not be
+recorded as proof that they were permanently stationary.
+For this population pass, retain the confirmed initial named-NPC placements.
+Research the camp's other occupants and starting positions before adding
+them. Track documented movement for later restoration; Nylla's later
+appearance depends on mission progress and remains outside current scope.
+The soldiers' advance needs trigger and route evidence before implementation.
+These 2007 accounts do not establish unchanged behavior in the final release.
+User priority: defer all dynamic movement and village activity until NPC
+placement is complete.
+
+Surviving map references (checked 2026-10-20)
+Ellatha's Assemble With Lieutenant Perkins page has a working 222x236 map:
+https://www.ellatha.com/tr/missionsview.asp?key=Assemble+With+Lieutenant+Perkins&id=88
+https://www.ellatha.com/tr/images/Maps/AWLP_PR.jpg
+Legend: 1 = Price, 2 = Perkins, X = Machina spawns. This is an overview,
+not a complete camp population census or exact individual spawn coordinates.
+The A Higher Calling map also survives (246x338):
+https://www.ellatha.com/tr/missionsview.asp?id=90&key=A+Higher+Calling
+https://www.ellatha.com/tr/images/Maps/AHC_PR.jpg
+Its Nylla marker is inside the facility, reflecting later mission context;
+do not use it to replace her confirmed initial village position.
+The Pravus Logos overview page loads, but its map uses unsupported Flash.
+TaRapedia's Atlas identifies CodeX (www.codex-tr.net) as an NPC/item/enemy
+cartography resource. The Wayback investigation below recovered some data.
+
+Wayback recovery (2026-10-20)
+The missing Ten Ton Hammer overview image survives at 1020x708:
+https://web.archive.org/web/20150203105513im_/http://www.tentonhammer.com/image/view/12821/preview
+Visually verified: it shows the AFS Preparation Camp, Frontlines, facility,
+hospital and points of interest. It does not label individual NPCs.
+The February 2015 timestamp is the archive capture date, not the game version
+or screenshot date; the image is referenced by the October 2007 guide.
+
+CodeX XML data was recovered from these snapshots:
+https://web.archive.org/web/20071111161315id_/http://www.codex-tr.net:80/mapview.php5
+https://web.archive.org/web/20071112133837id_/http://www.codex-tr.net:80/lstloc.php5
+https://web.archive.org/web/20080112185143id_/http://www.codex-tr.net:80/mapview.php5?mapid=2_1_9&poiid=3
+The first map contains Wilderness markers; the last contains Palisades markers.
+Their shared map catalog identifies Pravus as 2_1_6 (short name prr).
+The November 2007 location index counts three Pravus points of interest, but
+does not expose their names or coordinates. Do not infer that these are three
+NPCs, or mistake the Wilderness instance-entrance marker for an internal spawn.
+A focused CDX query for successful codex-tr.net captures containing 2_1_6
+returned no records. A broader subdomain query timed out; this is not proof
+that no other archive or mirror contains the missing Pravus data.
+Raw XML and archive index responses are saved outside the Git repository in
+the workspace's Pravus Research/sources folder.
+
+Native map extraction (2026-10-20)
+Extracted ui_map_adv_foreas_concordia_wilderness_pravusresearch.dds from the
+installed client's data/ui_map.glm and decoded it to PNG at its original
+1024x1024 resolution. The complete map is visible without the game UI crop.
+The image contains terrain and building outlines, not historical NPC markers.
+Also extracted 13 radar tiles (256x256 each) and a 512x512 effect texture.
+The nine exterior radar tiles are now assembled into a 768x768 working base;
+the four region-17 tiles remain separate.
+Outputs, original DDS files, a source manifest and extraction script are in
+Pravus Research/maps and Pravus Research/extract_pravus_maps.py outside Git.
+No game files, server data or spawn placements were changed by extraction.
+
+NPC placement working map (2026-10-20)
+Pravus Research/maps/pravus-npc-locations.png plots six current NPCs with
+high-contrast yellow dots, a numbered key, XYZ coordinates and a camp inset.
+The clean tile mosaic is pravus-minimap-base.png; point data and provenance
+are in pravus-npc-locations.json. Regenerate with plot_pravus_npcs.py.
+The plotting script reads the local World database in read-only mode.
+Client radar metadata for (1430,0) is (679,760,18,-7). The original client
+radarwindow's _SetupTextureOffsets and _UpdateMapImages confirm row-major
+tile order, 1 pixel/metre, and pixel coordinates u=X+366, v=391-Z.
+All client bytecode was inspected as data, not executed.
+The service NPC client names are Medic Cervantes (3133, pool 500201),
+Medic Adamson (3138, pool 500202), and Weapons Supplier Martin (9879,
+pool 500203). These join Nylla, Price and Perkins on the working map.
+The map records current known placements, not a complete historical census.
+
 Deferred evidence
 The historical guide (Tony "RadarX" Jones, October 4, 2007) documents soldiers
 at the Frontline's Entrance, Machina attacks, guards at the facility entrance,
 and three Linkers in an interior passage around X/Z 139.7,98.4:
 https://www.tentonhammer.com/node/12824
 It also places Nylla and Price approximately where Ellatha records them.
-Group centers and approximate counts are insufficient to invent individual
-placement coordinates, patrol routes or wave timers. Validate the room/floor
-and obtain additional evidence before placing these enemies.
+These were deferred during the exact-placement pass. The subsequent live
+survey and user authorization for estimates permit the second patch above;
+individual positions, patrol routes and wave timers are not recovered facts.
 
 Johnson's Ellatha record gives an older location (-83,33,-132):
 https://www.ellatha.com/tr/npcview.asp?id=72&key=Information+Spec.+Johnson
@@ -101,3 +350,43 @@ Nylla:   .tele -185 5.137001 -123
 Price:   .tele -268 7.159849 -127
 Perkins: .tele -77 32.020172 176
 Step away after teleporting to inspect the actor.
+
+
+V4 playtest correction - October 20, 2026
+----------------------------------------
+The user pulled all three new Frontlines Machina groups on the same road.
+V3 centers were only 46.1 and 56.6 m apart. Default detection is 18 m and
+creatures may chase 60 m from home; idle wandering stays within the pool.
+Migration 20261220000000_Pravus_frontlines_spacing_v4 moves only those pools:
+  640202 central approach: (-80, 25.213156, 10), radius 10 m
+  640203 southern field:  (-90, 36.395542, -100), radius 12 m
+  640204 northern field:  (-60, 25.937, 115), radius 12 m
+Adjacent centers are now 106.9 and 110.5 m apart. Counts remain 4-6 each,
+level 10, and respawn settings/instance policy are unchanged. This is an
+estimated encounter layout, not recovered retail coordinates. Four hundred
+navmesh samples per pool were reachable and inside their radii; pool footprints
+clear the existing AFS turret scan range. In-game terrain and encounter spacing
+still need a walk-through. Pulling enemies deliberately between packs can
+still combine encounters. V4 rollback restores the exact V3 coordinates/radii.
+
+The same playtest reported corpses firing until removed, including Thrax as
+well as Machina. Client 1.16.5.0 actor.pyo shows Recv_StateChange only calls
+TransitionTo; AnnounceDeath also cancels the current action, stops tracking,
+hides weapons, and stops persistent effects. Recv_ActorKilled invokes that
+cleanup only if IsDead is false. Creature deaths previously sent StateChange
+without ActorKilled. Both ordinary death and Machina's deferred first death
+now send ActorKilled BEFORE StateChange, and stop movement. Pending attacks
+from that creature are marked cancelled without mutating the missile queue
+while a killing hit may be iterating it. Explicit in-flight projectiles remain
+in flight. Cancellation survives revival, so a queued old attack cannot start
+again when its caster rises. This corrects a demonstrated notification gap;
+confirmation that it resolves the entire reported symptom requires a client
+retest. Existing dying-state AI guards and Machina self-revival are retained.
+Local disassembly, navigation samples and database backup are kept outside
+Git in Pravus Research/population-v4; no client assets are included in the patch.
+
+21 October: operation reconstruction supersedes temporary V2-V4 enemy pools.
+Migration20261221000000 disables those pools and installs mission-aware Pravus
+encounters, contacts, personal quest drops and ordinary loot coverage. See
+docs/pravus-mission-reconstruction.txt for route, counts, rewards and limits.
+Earlier migrations remain frozen and available for rollback/history.

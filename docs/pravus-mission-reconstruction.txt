@@ -1,0 +1,415 @@
+PRAVUS RESEARCH: MISSION RECONSTRUCTION SPECIFICATION
+21 October 2026 | First playable implementation and historical evidence
+
+PURPOSE
+
+Restore Pravus as a squad operation with linked missions, encounter progression,
+reinforcements, access control and a production-machine finale. The earlier
+population-only encounter-plan-v1 is a survey/design reference, not the final
+spawn specification. Do not combine its entire static population with new
+scripted waves. Migration 20261221000000_Pravus_operation_v1 supersedes the
+temporary population with the operation described below. The evidence ledger
+later in this document preserves the distinction between recovered facts and
+the reconstruction decisions made for this first pass.
+
+FIRST PLAYABLE PASS
+
+Content revision: pravus_operation_v1, World databases only (SQLite/MySQL).
+The main route is 570 Traitors to the Cause -> 574 Machinations -> 593 The
+Escapist -> 575 The Means of Production -> 1075 A Higher Calling. Existing
+570/574 data are preserved. The player still has to loot ten actual Forean
+remains outdoors, deliver them to Parsons, accept 593, and speak with Nylla.
+The usual completed-starting-experience qualification applies.
+
+Price offers 321 independently; Perkins completes it after 15 Frontlines
+Forean Machina kills. The shared instance delivers five per Bane dropship,
+waits 15 seconds after the last dies, and continues while an eligible living
+player is within 60 m of the Frontlines entrance. Uncredited kills do not exhaust
+the event. Three AFS soldiers hold the sandbags. Northern/southern field groups
+have 4 Machina each; a far-north group has 3. These counts/timings are estimates.
+
+Two shootable security cameras watch the bridge. A six-second alarm delay
+allows both to be destroyed; otherwise one level 11 Juggernaut arrives. The
+entrance has three key-bearing Thrax plus one grenadier. The key is personal
+mission loot: template 11505, class 20000013, 100% chance while 575 objective 3
+needs it. Eligible nearby squad members each receive their own claimable copy,
+including under Individual loot, and cannot take another player's key.
+Killing without looting does not satisfy that objective. Existing
+inventory satisfies it when an assignment is accepted again. The key survives
+abandonment/reconnect and is consumed at 575 turn-in. Doors at the staircase
+bulkhead and prison open once a squad member has actually collected a key.
+
+The downstairs room has 3 soldiers and 1 grenadier, the passage 3 Linkers, and
+the factory 3 groups of 4 Thrax (12 total). Factory guards activate when an
+eligible player approaches. Production adds 3 Forean Machina every 25 seconds,
+capped at 6 living Machina. Destroying the native fueling capsule stops further
+production; the player must also kill the remaining factory guards/Machina.
+Finale Nylla then appears to accept the mission. The village Nylla remains
+available, so players cannot lose their hand-in contact. Maulis is an optional
+prison conversation, not a mandatory boss or Linker kill gate.
+
+Nylla issues the real armband (template 45439/class 22953) on accepting 1075.
+It persists with the assignment and is consumed by the Baruhi conversation;
+abandoning 1075 removes it. It cannot be replaced by a bare conversation flag.
+
+Johnson offers 323 independently for this first pass because the late-retail
+unlock condition is uncertain. All three radar structures survive in the
+shipped map, class 3548:
+  North objective 309:     (-2.861,47.394,298.668)
+  Northwest objective 310:(-54.641,32.858,163.034)
+  South objective 311:    (-47.340,36.385,-224.068)
+These native landmarks resolve the guide's repeated/mistyped third coordinate.
+One shootable infestation per dish is provisional. Destroy all three and
+return to Johnson. Objective completion is shown; dynamic remaining-enemy
+counter text is not yet restored for 323/575.
+
+Standley's 924 dispatch uses the existing real Communication 51, Control 41 and
+Machine 34 shrines. Already learned Logos count. It does not gate the factory.
+
+LOOT AND REWARDS
+
+All operational hostile templates have ordinary corpse-loot bindings using the
+existing level 10-14 Wilderness profile; Juggernaut uses its boss variant. The
+map requires coverage so an unbound hostile is a startup validation error.
+These profiles supply the emulator's existing weighted equipment/consumables;
+currency and personal mission drops use their normal separate paths. Rates and
+species-specific selection are estimates, not recovered retail loot tables.
+
+Mission | XP    | Credits | Items
+593     | 2500  | 500     | none
+321     | 7500  | 1000    | choose one: leechgun 1285, Photonic Shotgun 601,
+                          Pulse Chaingun 2821
+323     | 7000  | 1100    | choose one: Pulse Chaingun 2821 or leechgun 1339
+575     |10000  | 1050    | EMP pistol 3002 and 3 basic medpacks 44917
+924     | 6000  | 1200    | none (three Logos are acquired at the shrines)
+1075    | 5000  | 1000    | armband is delivered/consumed, not kept as reward
+
+The guide establishes 575's 1050 credits and EMP pistol and the broad 321/323
+weapon choices. Exact XP, other credit amounts, item quality/level and added
+medpacks are provisional. The 2007 names Eclipse/Dynamo Leechgun did not resolve
+in the final-client name table;1285/1339 are supported final-client physical/
+virulent leechgun substitutes. Shotgun/chaingun names were verified against
+the client, not inferred from a template number.
+
+TESTING AND KNOWN FIRST-PASS LIMITS
+
+PravusOperationTests exercises native NPC offers/conversations/turn-ins,
+actual damage/corpse pickup, key and armband persistence, all-clear gating,
+dropship caps, radio objectives, Logos use and camera/instance isolation.
+PravusOperationMigrationTests checks provider SQL generation and exact rollback
+of the affected data tables, including foreign-key integrity.
+
+575 and 323 currently require each player to accept from the NPC; the journal's
+share action is disabled for these two scripted assignments. Their world
+encounters remain shared and eligible participants earn their own progress.
+The declared data.sequence signals use the existing durable scene delivery
+path; the map controller owns spawning, so each assignment creates no extra mobs.
+
+Player objectives/inventory/rewards are durable. The encounter objects and
+wave timers reset if their map is unloaded or the server restarts. Resuming
+players in the same instance identity can complete the rebuilt encounter;
+this is not retail instance-save persistence. Scene-backed assignments remain
+bound to the instance where they were accepted. If changing squads or resetting
+the instance gives a different instance identity, abandon/reaccept 575 or 323
+from its NPC. The retained key satisfies the new 575 assignment. Destroyed
+facts are reconciled for eligible players revisiting
+the same running instance. A full wipe does not create a second factory or
+unbounded reinforcements. Cleared ordinary pools retain normal squad respawn
+policy (which can override the 180-second database delay).
+
+Factory/capsule assembly origins, camera height, door fit, infestation visual
+fit, Maulis presentation, combat tuning and enemy sightlines require client
+playtesting. Native components are used, but exact server placements were
+not recovered. AFS movement/cinematic timing and the village Nylla's staged
+departure are not recreated. The Juggernaut uses native guns/eyebeam actions
+with estimated damage; additional retail abilities remain future refinement.
+
+RESEARCH LEDGER AND ORIGINAL DESIGN TARGETS
+
+The following ledger records the research and acceptance targets preceding
+implementation. The FIRST PLAYABLE PASS and TESTING AND KNOWN FIRST-PASS LIMITS
+sections above describe what is implemented now; broader cinematic and native
+client validation targets below remain follow-up work.
+
+EVIDENCE RULES
+
+N = inspected native client 1.16.5.0 identity or explicit text.
+H = historical walkthrough description, principally Tony "RadarX" Jones,
+    TenTonHammer Pravus Research Guide, 4 October 2007.
+E = current emulator source/database behavior; not proof of original behavior.
+R = proposed reconstruction of missing server rules, counts or timings.
+U = unresolved; do not silently promote to a historical fact.
+
+Use the walkthrough for the experienced route and encounter behavior; reconcile
+it against the later client for the target late-service version. The guide
+itself warns of a possible Pirate Radio availability change and is uncertain
+whether killing the Linkers is mandatory. It is not a complete server script.
+Native text/objective IDs do not encode all prerequisites or spawn conditions.
+
+Sources:
+https://www.tentonhammer.com/guides/pravus-research-guide
+https://www.tentonhammer.com/node/12824 (same article)
+https://tabularasa.fandom.com/wiki/Wilderness_mission_list (contact index)
+Local saved guide: ../Pravus Research/sources/tentonhammer-pravus.html
+Local native archive: Game Client/Tabula Rasa 1.16.5.0/data/game.zip
+  generated/client/missionconversation.pyo
+  generated/client/missionobjective.pyo
+  generated/client/objectiveconversation.pyo
+  generated/client/language/english/missiontextlanguage.pyo
+
+The reproducible research extractor is outside Git at workspace-relative
+Pravus Research/mission-reconstruction/extract_native_contracts.py. It reads
+literal lookup-table assignments with a restricted opcode whitelist; it does
+not execute client bytecode. Its native-contracts.json records member hashes,
+source row counts, objective IDs, dialogue package IDs and original text.
+Full extracted proprietary dialogue and client archives stay outside Git.
+
+QUEST ROUTE TO PRAVUS
+
+570 Traitors to the Cause
+  Taylor in Wilderness -> Council Elder Baruhi at the Memory Tree.
+  N: native objective 1, conversation package 227, flag 1.
+  E: enabled wilderness_1_16_5 definition; giver creature129, receiver106.
+  E: no earlier mission prerequisite in the authored definition; general
+     starting-experience qualification still applies. This is not proof of
+     the original retail minimum level or first-offer conditions.
+    |
+    v
+574 Machinations
+  Baruhi -> collect ten Forean Machina remains -> Parsons outside Pravus.
+  N: objectives 2 (collect) and 3 (deliver), Parsons package450.
+  E: requires rewarded570; enabled; creature630100/class6236 supplies eligible
+     remains template753/class7991. Delivery consumes ten actual remains.
+  E: Parsons creature119, indicator XYZ(-701.8125,202.5625,65.83984), map1220.
+    |
+    v
+593 The Escapist
+  Parsons -> enter the caverns -> speak to Nylla in the Pravus camp.
+  H: requires completing Machinations. N: the dialogue confirms this route.
+  N: objective1, texts1875/6721; completion package420/flag1/text1876.
+  E: not installed as an operational mission. Current outdoor574 explicitly
+     stops before this instance handoff.
+    |
+    v
+575 The Means of Production
+  Nylla -> investigate production -> obtain entrance key/access -> destroy
+  central Fueling Capsule -> eliminate remaining Bane -> report to Nylla.
+  H: receive from Nylla after The Escapist; Nylla appears at the finale.
+  N: key, bonus prisoner conversation and ambush objectives survive (below).
+  E: no normalized mission definition installed.
+    |
+    v
+1075 A Higher Calling
+  Nylla -> carry her armband back to Baruhi at the Memory Tree.
+  N: objective1 texts6067/6644, package227/flag1/text6068.
+  N: armband entity class22953. Do not confuse that class with an item-template
+     ID; resolve an appropriate template and owned-item semantics separately.
+  H/N: post-rescue epilogue. Exact retail offer predicate remains U;
+       requiring rewarded575 is the proposed R implementation.
+
+ENTRY IS DISTINCT FROM THE QUEST CHAIN
+
+E: enabled map_link13 takes map1220 -> map1430 at source
+   XYZ(-786.2202,233.6148,71.5645), radius6, to
+   XYZ(-193.5236,9.9638,-257.405). Map_link38 is the return route.
+E: MapLinkManager.Fire has no Pravus quest-completion requirement. Pravus1430
+   is in SquadInstancePolicies.DefaultMaps and normally creates/joins a squad
+   instance through the existing map-entry machinery.
+H: the guide tells players to obtain The Escapist before entering.
+U: that does NOT establish a hard retail entry lock requiring570/574/593.
+Policy: preserve cave entry unless stronger evidence establishes a lock.
+Gate mission offers/objectives appropriately rather than inventing a zone lock.
+
+PARALLEL PRAVUS MISSIONS
+
+321 Assemble With Lieutenant Perkins
+  Price -> Frontlines entrance fight -> Perkins at the northern fortification.
+  N: objective310; title115, empty body6522, counter slot0 label1711.
+  H: fifteen Machina kills advance the objective; AFS troops accompany the
+     approach and Bane ships bring reinforcements near the sandbags.
+  U: exact wave size, launch interval, area radius and original start trigger.
+  U: no evidence that321 is a prerequisite for accepting575 or entering the
+     facility. Treat it as a parallel operation, not a fabricated linear gate.
+  E: the only installed321 definition is disabled legacy content. Its old
+     giver101/receiver100 now refer to Witherspoon/Rogers, NOT Price/Perkins.
+     Merely enabling that legacy row would be wrong. Create a complete new
+     revision bound to the actual Pravus NPCs and correct native packages.
+
+323 Pirate Radio
+  Johnson -> destroy infestation at three communications dishes -> Johnson.
+  N: objective309 North, objective310 Northwest, objective311 South.
+  N: counter labels belong to slots2/1/0 respectively, not all to slot0.
+  N: Johnson package106. Name ID206 is Information Spec. Johnson.
+  H: the guide provides three dish coordinates, but its compass descriptions
+     are inconsistent and its availability note explicitly mentions changes.
+  U: exact retail unlock condition and unambiguous objective-to-dish mapping.
+  Policy: preserve native North/Northwest/South identities; verify landmarks
+     before assigning those objective IDs. Do not infer a321 prerequisite.
+
+924 Logos: Communication, Control, Machine
+  Standley outside -> three native Logos objectives6/7/8 -> return.
+  N: side exploration objective identities survive.
+  Policy: optional side mission; not a prerequisite for the production finale.
+
+NATIVE CONTRACT FOR THE MAIN OPERATION (575)
+
+Mission title1756; log1757; opening1758; finishing1759; reminder6635.
+Category10000048 = Instance (Pravus Research), not the outdoor category10000044.
+
+Objective | Name text | Body text | Counter | Interpretation
+1         | 1865      | 6636      | none    | Find source of Forean Machina
+2         | 1867      | 6637      | none    | Destroy Fueling Capsule
+3         | 20000025  | 6640      | none    | Obtain Level 1 Access Keypass
+4         | 20000028  | 6638      | none    | BONUS: speak to Ranger Maulis
+5         | 20000033  | 6639      | 20000034 slot0 | Ambush: remaining Bane
+
+Objective IDs are identities, not an inferred execution order. The access key
+must work at the entrance; it must not wait until after the capsule is dead
+merely because its objective ID is numerically greater.
+Nylla's conversations for objectives1/2 use package420, flag1.
+Maulis objective4 uses package468, flag1; completion text20000030.
+Maulis explains the production chamber, three exposed sides and dangerous
+glass rooms. This is native evidence of a prisoner and encounter advice.
+It does not establish exact enemy counts, movement or a kill-Linkers gate.
+
+WORLD-ASSET EVIDENCE
+
+Confirmed native class labels (not inferred from a modern asset filename):
+  6236     Forean Machina
+  3868     Hominis Machina
+  9272     Production Fueling Capsule
+  20000013 Pravus Research Facility: Level 1 Keypass
+  20000015 Level 1 Access Terminal
+  9590     older Level 1 Clearance Disc; distinguish from the newer keypass
+  10290 / 24053 Security Camera candidates; resolve the actual variant
+
+Other factory classes exist:9271 base,9273 cartridge spawner,9277 factory door,
+9485 tubes,9535 center shield,9588 pipes,9598 destroyed inside door,9600 upper
+base. Presence in the client class catalog is not placement evidence.
+
+The 1,848 static entities in the inspected Pravus .map do NOT include9272 or
+the assembled factory. The capsule's exact root position, orientation and
+height are unresolved. Earlier P? at X/Z224,168 is ONLY a chamber reference.
+Do not floor-snap a vertically exposed target to that point and call it retail.
+Prison architecture exists at XYZ312,8,56; that is a room root, not Maulis's
+spawn coordinate. The stasis chamber at224,7.6172,40 is a different object.
+
+The current restoration added Hominis640201/class3868 to Frontlines. Native
+quest574/575 explicitly concerns Forean Machina and the native Forean model
+and weapon exist. Forean Machina should be the baseline for the mission's
+production encounters. The exact outdoor species mixture is still U: avoid
+claiming every original outdoor Machina was necessarily Forean.
+
+ENCOUNTER SEQUENCE AND PROPOSED SERVER RULES
+
+A. Camp / briefing
+   Restore593 turn-in and575 offer at Nylla;321 at Price. Retain services.
+   Real NPC conversation packages must be bound to the restored creatures.
+   Keep quest offerings distinct from simply entering the map.
+
+B. Frontlines battle
+   H: sandbag defense, allied troops and incoming dropships;15 qualifying kills.
+   R initial design: eligible squad member with active321 enters the grounded
+     Frontlines trigger volume; one shared encounter starts for that instance.
+     Use three drops of five enemies with at most five encounter enemies alive
+     at once. These counts/conditions are estimates, NOT recovered retail rules.
+   R: schedule another drop after the preceding wave dies, with a short
+     readable arrival interval; exact timing needs aircraft-animation validation.
+   Credit nearby eligible squad members under existing mission-credit rules.
+   Recovery must not strand progress when allies kill enemies, a player dies,
+     someone arrives late, or the server reloads. A restartable attempt or
+     additional bounded wave must supply missing eligible kills without double
+     credit. Choose and test that policy before enabling the scene.
+   Remove/suppress the overlapping static entry pack when enabling this battle.
+   F2/F3/far-north field groups are separate ambient proposals, not extra waves.
+
+C. Outer battlefield / communications
+   Keep separated approach encounters and AFS defenses; add real destroyable
+   infestation to mapped dishes for323 once its unlock/mapping is resolved.
+   Do not stack enemy spawn radii into the friendly fortifications.
+
+D. Bridge / entrance
+   H: two cameras; failure to deal with them risks a Juggernaut; a small Thrax
+     group carries the access key.
+   R: bounded detection/alarm sequence creates at most one Juggernaut per
+     encounter attempt; both cameras destroyed before alarm prevents it.
+   U: original detection range, delay, patrol/landing position and repeat rule.
+   Resolve the native keypass template and actual access terminal/door. Key
+     acquisition must grant genuine mission item credit; door state is shared
+     within the squad instance, not separately opened per character.
+
+E. Interior / prisoner / Linkers
+   Retain the user-confirmed guard room below the stairs. Population should
+     follow room roles; earlier proposed guard counts remain estimates.
+   Restore optional Maulis conversation in a verified prison-cell position.
+   H: three Linkers in the passage near X/Z139.7,98.4.
+   Do not require Linker deaths for575: the guide explicitly could not verify
+     that condition and the client objectives do not specify it.
+   Reflection behavior needs its own native-compatible combat implementation.
+
+F. Production chamber
+   Discovering the source advances575.1 and exposes the capsule objective.
+   H/N: shoot the exposed capsule; it stops Machina production.
+   H: approximately twelve Thrax defend the final room.
+   R: start with twelve total guards and a cap of three active produced Machina;
+     these are tunable budgets. Do not add twelve more to the existing pads.
+   N:575.5 is an explicit remaining-Bane ambush objective. The exact timing and
+     membership of an additional ambush is U; twelve initial guards alone do
+     not prove that the ambush is already represented. Define the admitted
+     encounter actor set and do not count every enemy elsewhere on map1430.
+   On capsule death: cancel future production; preserve legitimate in-flight
+     actions; advance the remaining-enemy phase; make clear what remains alive.
+   H: Nylla appears for completion. Only enable turn-in after the required
+     objectives/clear condition, then offer the1075 epilogue.
+   H:575 pays1050 credits and an EMP pistol. Resolve a working appropriate
+     item template; XP, exact template/level/quality and other rewards are U.
+
+ENGINEERING BOUNDARIES
+
+- Use existing normalized mission rows and typed scene interfaces, paired
+  SQLite/MySQL data migrations and fixed migration helpers. Do not mutate
+  already-applied V1-V4 population migrations or add another quest engine.
+- Keep squad-instance encounter state separate from each player's assignment.
+  Multiple accepts must not multiply dropships, doors, capsule or Nylla.
+- Use native IDs and packages; resolve item-template IDs independently from
+  class IDs. Mission inventory must use assignment/party semantics supported
+  by the existing mission-item system, not ad-hoc character inventory writes.
+- Preserve outdoor570/574 and their existing completed progress. Add593 after
+  the boundary; do not replace outdoor quests with instance shortcuts.
+- Separate authored server choices from recovered evidence in migration notes.
+- Factory and access-object positions have been authored provisionally for
+  testing; their visual fit and collision remain native-client checks.
+- Do not deploy against a running test session. A restart can auto-apply pending
+  SQLite migrations, so code readiness and local deployment are distinct steps.
+
+IMPLEMENTATION ORDER / ACCEPTANCE
+
+1. Offer/turn-in chain: completed574 admits593; Parsons -> Nylla works through
+   native dialogue, and593 unlocks575. No GM mission bypass in acceptance tests.
+2. Frontlines scene321: area entry, allied actors, ships, bounded enemy waves,
+   fifteen qualifying kills, Perkins turn-in; wipe/re-entry/reconnect covered.
+3. Access: cameras/alarm/Juggernaut and key-bearing guards; party door state.
+4. Full575: source discovery, optional Maulis, capsule damage/production stop,
+   remaining-enemy phase and Nylla turn-in. Reject premature/double rewards.
+5. Side content:323 dish mapping/unlock;924 Logos;1075 armband return.
+6. Replace overlapping population estimates only as their owning encounters
+   become functional. Validate terrain, floors, paths and pull separation in
+   the client. A 2D map alone cannot establish those properties.
+
+Required automated checks: native objective/counter-slot contracts; migrated
+content validation for both providers; upgrade/repeated-upgrade/rollback;
+acceptance/prerequisite/turn-in behavior; squad isolation/shared actor count;
+duplicate kill and duplicate reward prevention; allies/late joiners/death;
+abandonment/reconnect/restart; production cancellation; camera suppression;
+key ownership/door state; no leaked scene actors or reappearing cleared waves.
+Required native-client checks: dialogue availability, mission tracker labels,
+wave presentation/landing, targetable capsule height, access collision/state,
+Maulis placement, final ambush accounting, Nylla appearance and rewards.
+
+CURRENT RESULT
+
+The first playable server implementation is present in the paired operation
+migrations, PravusOperation controller, and integration tests described above.
+The local World upgrade is backed up separately; character and account data
+are not part of that migration. A native-client walkthrough is the next
+validation step, particularly targetable capsule placement and door fit.

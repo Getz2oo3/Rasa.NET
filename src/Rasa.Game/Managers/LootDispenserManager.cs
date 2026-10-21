@@ -357,18 +357,18 @@ namespace Rasa.Managers
                     $"Corpse loot source is not current: map {mapContextId}, creature {creatureId}.");
         }
 
-        private void AppendMissionLoot(Client owner, LootDispenser loot)
+        private void AppendMissionLoot(Client owner, LootDispenser loot, bool partyOnly = false)
         {
             if (owner.Player.Missions.Count == 0)
                 return;
             lock (loot.Map.LootSyncRoot)
-                AppendMissionLootLocked(owner, loot);
+                AppendMissionLootLocked(owner, loot, partyOnly);
         }
 
-        private void AppendMissionLootLocked(Client owner, LootDispenser loot)
+        private void AppendMissionLootLocked(Client owner, LootDispenser loot, bool partyOnly)
         {
             var missions = _missionManager ?? MissionApplication.Instance;
-            if (!MissionLootPlanner.HasCandidates(owner, missions))
+            if (!MissionLootPlanner.HasCandidates(owner, missions, partyOnly))
                 return;
             var staged = new List<(Item Item, MissionLootPlanner.QualifiedDrop Drop)>();
             var committed = false;
@@ -377,7 +377,7 @@ namespace Rasa.Managers
                 using var unit = _gameUnitOfWorkFactory.CreateChar();
                 unit.ExecuteTransaction(() =>
                 {
-                    foreach (var drop in MissionLootPlanner.Plan(owner, loot, missions, unit, _lootRoll))
+                    foreach (var drop in MissionLootPlanner.Plan(owner, loot, missions, unit, _lootRoll, partyOnly))
                     {
                         var template = ItemManager.Instance.GetItemTemplateById(drop.Binding.ItemTemplateId);
                         var itemClass = template == null ? null :
@@ -491,7 +491,7 @@ namespace Rasa.Managers
         /// <summary>
         /// The corpse's loot, for whoever the killer's squad loot method gives it to
         /// (PartyManager.LootersFor): each of them is shown the dispenser. A mission's authored
-        /// loot is the killer's alone.
+        /// loot is the killer's alone unless its binding opts into personal squad copies.
         /// </summary>
         internal void Loot(Client client, Creature creature, ActorGameplayPolicy policy = null)
         {
@@ -535,6 +535,17 @@ namespace Rasa.Managers
             AppendMissionLoot(client, loot);
             if (loot.Looters.Contains(client.Player.EntityId) && !shownTo.Contains(client))
                 shownTo.Add(client);
+
+            // Only explicitly authored shared drops opt in. Each copy is qualified against
+            // that member's assignment/inventory and remains theirs under every loot method.
+            var missionSharers = policy.Loot == null
+                ? PartyManager.Instance.SharersOf(client, creature.Position) : new List<Client> { client };
+            foreach (var member in missionSharers.Where(member => member != client).Distinct())
+            {
+                AppendMissionLoot(member, loot, partyOnly: true);
+                if (loot.Looters.Contains(member.Player.EntityId) && !shownTo.Contains(member))
+                    shownTo.Add(member);
+            }
 
             foreach (var looter in shownTo)
             {

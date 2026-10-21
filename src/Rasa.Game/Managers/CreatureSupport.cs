@@ -407,8 +407,7 @@ namespace Rasa.Managers
             BehaviorManager.Instance.EndCarry(mapChannel, creature);
             creature.HarvestAttemptsLeft = 0;
             creature.Attributes[Attributes.Health].Current = 0;
-            BehaviorManager.Instance.StopMoving(creature);
-            CellManager.Instance.CellCallMethod(mapChannel, creature, new StateChangePacket(new List<CharacterState> { CharacterState.Dead }));
+            CreatureManager.NotifyDeath(mapChannel, creature);
 
             lock (CastsLock)
                 Casts.Add(new Cast

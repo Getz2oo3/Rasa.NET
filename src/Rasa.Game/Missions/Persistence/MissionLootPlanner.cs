@@ -21,15 +21,15 @@ namespace Rasa.Game.Missions.Persistence
         // Qualification lasts only as long as the existing corpse loot row, not as another durable ledger.
         private static readonly ConditionalWeakTable<LootItem, QualifiedDrop> Qualifications = new();
 
-        internal static bool HasCandidates(Client client, MissionApplication missions) =>
+        internal static bool HasCandidates(Client client, MissionApplication missions, bool partyOnly = false) =>
             client.Player.Missions.Values.Any(log => log.State == MissionState.Active &&
                 missions.TryGetOperationalMission(log.MissionId, out var mission) &&
-                mission.Items.Values.Any(binding => binding.Drop != null));
+                mission.Items.Values.Any(binding => binding.Drop != null && (!partyOnly || binding.Drop.ShareWithNearbyParty)));
 
         internal static void Attach(LootItem item, QualifiedDrop drop) => Qualifications.Add(item, drop);
 
         internal static IReadOnlyList<QualifiedDrop> Plan(Client client, LootDispenser loot,
-            MissionApplication missions, ICharUnitOfWork unit, Func<int, int, int> roll)
+            MissionApplication missions, ICharUnitOfWork unit, Func<int, int, int> roll, bool partyOnly = false)
         {
             var planned = new List<QualifiedDrop>();
             if (!IsCurrentSource(client, loot))
@@ -44,7 +44,7 @@ namespace Rasa.Game.Missions.Persistence
                     continue;
                 foreach (var binding in mission.Items.Values.OrderBy(binding => binding.ItemKey, StringComparer.Ordinal))
                 {
-                    if (binding.Drop == null || binding.Drop.ChancePercent == 0 ||
+                    if (binding.Drop == null || partyOnly && !binding.Drop.ShareWithNearbyParty || binding.Drop.ChancePercent == 0 ||
                         binding.Drop.MapContextId != client.Player.MapContextId ||
                         !binding.Drop.CreatureIds.Contains(loot.Corpse.DbId))
                         continue;
